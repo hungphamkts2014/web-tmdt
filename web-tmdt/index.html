@@ -355,4 +355,819 @@
             </div>
 </div>
 </footer>
+
+<!-- ============================================================ -->
+<!-- CHATBOT AI - marked.js CDN -->
+<!-- ============================================================ -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+<!-- ============================================================ -->
+<!-- CHATBOT AI - STYLES -->
+<!-- ============================================================ -->
+<style>
+  /* ===== FLOATING BUTTON ===== */
+  #chatbot-toggle {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    z-index: 9999;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #00f1fe 0%, #00e2ee 50%, #99f7ff 100%);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 30px rgba(0, 241, 254, 0.4), 0 8px 32px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+    animation: chatbot-pulse 2s infinite;
+  }
+  #chatbot-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 40px rgba(0, 241, 254, 0.6), 0 8px 32px rgba(0, 0, 0, 0.4);
+  }
+  #chatbot-toggle svg {
+    width: 28px;
+    height: 28px;
+    fill: #005f64;
+  }
+  #chatbot-toggle.active {
+    animation: none;
+    background: #ff4d4f;
+    box-shadow: 0 0 20px rgba(255, 77, 79, 0.4), 0 8px 32px rgba(0,0,0,0.3);
+  }
+  #chatbot-toggle.active svg { fill: #fff; }
+
+  @keyframes chatbot-pulse {
+    0%, 100% { box-shadow: 0 0 30px rgba(0,241,254,0.4), 0 8px 32px rgba(0,0,0,0.3); }
+    50% { box-shadow: 0 0 50px rgba(0,241,254,0.7), 0 8px 32px rgba(0,0,0,0.3); }
+  }
+
+  /* ===== NOTIFICATION BADGE ===== */
+  #chatbot-badge {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 20px;
+    height: 20px;
+    background: #ff4d4f;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    border: 2px solid #0e0e0e;
+    animation: badge-bounce 1s ease infinite;
+  }
+  @keyframes badge-bounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+  }
+
+  /* ===== CHAT WINDOW ===== */
+  #chatbot-window {
+    position: fixed;
+    bottom: 100px;
+    right: 28px;
+    z-index: 9998;
+    width: 400px;
+    max-width: calc(100vw - 32px);
+    height: 560px;
+    max-height: calc(100vh - 140px);
+    border-radius: 20px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    /* Glassmorphism */
+    background: rgba(14, 14, 14, 0.85);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(153, 247, 255, 0.12);
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(0, 241, 254, 0.08);
+    /* Animation */
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+    pointer-events: none;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  #chatbot-window.open {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+  }
+
+  /* ===== CHAT HEADER ===== */
+  .chat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background: rgba(26, 25, 25, 0.9);
+    border-bottom: 1px solid rgba(73, 72, 71, 0.3);
+    flex-shrink: 0;
+  }
+  .chat-header-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .chat-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #00f1fe, #7ea3ff);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .chat-name {
+    font-family: 'Manrope', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    color: #fff;
+  }
+  .chat-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: #adaaaa;
+  }
+  .chat-status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #4ade80;
+    animation: status-blink 1.5s ease-in-out infinite;
+  }
+  @keyframes status-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+  .chat-header-actions {
+    display: flex;
+    gap: 4px;
+  }
+  .chat-header-actions button {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    border: none;
+    background: transparent;
+    color: #adaaaa;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+  .chat-header-actions button:hover {
+    background: rgba(153, 247, 255, 0.1);
+    color: #99f7ff;
+  }
+  .chat-header-actions button svg {
+    width: 18px;
+    height: 18px;
+  }
+  .spin-animation { animation: spin 0.5s linear; }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+  /* ===== CHAT MESSAGES ===== */
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    scroll-behavior: smooth;
+  }
+  .chat-messages::-webkit-scrollbar { width: 4px; }
+  .chat-messages::-webkit-scrollbar-track { background: transparent; }
+  .chat-messages::-webkit-scrollbar-thumb { background: rgba(153,247,255,0.2); border-radius: 4px; }
+
+  /* ===== MESSAGE BUBBLES ===== */
+  .chat-msg {
+    display: flex;
+    gap: 10px;
+    max-width: 88%;
+    animation: msg-fade-in 0.3s ease;
+  }
+  @keyframes msg-fade-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .chat-msg.bot { align-self: flex-start; }
+  .chat-msg.user { align-self: flex-end; flex-direction: row-reverse; }
+
+  .chat-msg .msg-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    margin-top: 2px;
+  }
+  .chat-msg.bot .msg-avatar {
+    background: linear-gradient(135deg, #00f1fe, #7ea3ff);
+  }
+  .chat-msg.user .msg-avatar {
+    background: rgba(73, 72, 71, 0.6);
+  }
+
+  .chat-msg .msg-bubble {
+    padding: 12px 16px;
+    border-radius: 16px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    font-family: 'Inter', sans-serif;
+  }
+  .chat-msg.bot .msg-bubble {
+    background: rgba(38, 38, 38, 0.7);
+    border: 1px solid rgba(73, 72, 71, 0.2);
+    color: #e5e2e1;
+    border-top-left-radius: 4px;
+  }
+  .chat-msg.user .msg-bubble {
+    background: linear-gradient(135deg, rgba(0,241,254,0.15), rgba(126,163,255,0.1));
+    border: 1px solid rgba(0, 241, 254, 0.2);
+    color: #fff;
+    border-top-right-radius: 4px;
+  }
+
+  /* ===== TYPING INDICATOR ===== */
+  .typing-indicator {
+    display: flex;
+    gap: 10px;
+    align-self: flex-start;
+    max-width: 88%;
+    animation: msg-fade-in 0.3s ease;
+  }
+  .typing-dots {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 14px 20px;
+    background: rgba(38, 38, 38, 0.7);
+    border: 1px solid rgba(73, 72, 71, 0.2);
+    border-radius: 16px;
+    border-top-left-radius: 4px;
+  }
+  .typing-dots span {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #99f7ff;
+    animation: typing-bounce 1.2s ease-in-out infinite;
+  }
+  .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes typing-bounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+    30% { transform: translateY(-6px); opacity: 1; }
+  }
+
+  /* ===== CHAT INPUT ===== */
+  .chat-input-area {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 20px;
+    background: rgba(26, 25, 25, 0.9);
+    border-top: 1px solid rgba(73, 72, 71, 0.3);
+    flex-shrink: 0;
+  }
+  .chat-input-area input {
+    flex: 1;
+    background: rgba(19, 19, 19, 0.8);
+    border: 1px solid rgba(73, 72, 71, 0.3);
+    border-radius: 12px;
+    padding: 12px 16px;
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    font-size: 13.5px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .chat-input-area input::placeholder { color: #777575; }
+  .chat-input-area input:focus { border-color: rgba(0, 241, 254, 0.4); }
+
+  .chat-send-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    border: none;
+    background: linear-gradient(135deg, #00f1fe, #00e2ee);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .chat-send-btn:hover { box-shadow: 0 0 16px rgba(0,241,254,0.4); transform: scale(1.05); }
+  .chat-send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+  .chat-send-btn svg { width: 18px; height: 18px; fill: #005f64; }
+
+  /* ===== MARKDOWN STYLES ===== */
+  .chat-markdown { font-size: 13.5px; color: #e5e2e1; }
+  .chat-markdown p { margin: 0 0 8px 0; line-height: 1.7; }
+  .chat-markdown p:last-child { margin-bottom: 0; }
+  .chat-markdown strong { color: #99f7ff; font-weight: 600; }
+  .chat-markdown em { color: #d6d4d3; font-style: italic; }
+  .chat-markdown ul, .chat-markdown ol {
+    margin: 6px 0;
+    padding-left: 20px;
+  }
+  .chat-markdown li {
+    margin: 4px 0;
+    line-height: 1.6;
+  }
+  .chat-markdown ul li::marker { color: #00e2ee; }
+  .chat-markdown code {
+    background: rgba(0, 0, 0, 0.4);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Consolas', 'Fira Code', monospace;
+    font-size: 12px;
+    color: #99f7ff;
+  }
+  .chat-markdown pre {
+    background: rgba(0, 0, 0, 0.5);
+    padding: 12px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 8px 0;
+  }
+  .chat-markdown pre code {
+    background: transparent;
+    padding: 0;
+    font-size: 12px;
+  }
+  .chat-markdown blockquote {
+    border-left: 3px solid #00e2ee;
+    padding: 8px 14px;
+    margin: 8px 0;
+    color: #adaaaa;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 0 8px 8px 0;
+  }
+  .chat-markdown a { color: #00e2ee; text-decoration: underline; }
+  .chat-markdown h1, .chat-markdown h2, .chat-markdown h3 {
+    color: #fff;
+    margin: 10px 0 6px 0;
+    font-family: 'Manrope', sans-serif;
+  }
+  .chat-markdown h3 { font-size: 14px; }
+
+  /* ===== MOBILE RESPONSIVE ===== */
+  @media (max-width: 480px) {
+    #chatbot-window {
+      right: 0;
+      bottom: 0;
+      width: 100%;
+      max-width: 100%;
+      height: 100%;
+      max-height: 100%;
+      border-radius: 0;
+    }
+    #chatbot-toggle { bottom: 20px; right: 20px; width: 56px; height: 56px; }
+  }
+</style>
+
+<!-- ============================================================ -->
+<!-- CHATBOT AI - HTML WIDGET -->
+<!-- ============================================================ -->
+
+<!-- Floating Toggle Button -->
+<button id="chatbot-toggle" aria-label="Mở chatbot">
+  <span id="chatbot-badge">1</span>
+  <!-- Chat icon -->
+  <svg id="chatbot-icon-chat" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
+  </svg>
+  <!-- Close icon (hidden by default) -->
+  <svg id="chatbot-icon-close" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display:none;">
+    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+  </svg>
+</button>
+
+<!-- Chat Window -->
+<div id="chatbot-window">
+  <!-- Header -->
+  <div class="chat-header">
+    <div class="chat-header-info">
+      <div class="chat-avatar">🤖</div>
+      <div>
+        <div class="chat-name">Luminescent AI</div>
+        <div class="chat-status">
+          <span class="chat-status-dot"></span>
+          Online
+        </div>
+      </div>
+    </div>
+    <div class="chat-header-actions">
+      <!-- Refresh Button -->
+      <button id="chat-refresh-btn" title="Làm mới hội thoại">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+        </svg>
+      </button>
+      <!-- Close Button -->
+      <button id="chat-close-btn" title="Đóng">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Messages Area -->
+  <div class="chat-messages" id="chat-messages"></div>
+
+  <!-- Input Area -->
+  <div class="chat-input-area">
+    <input type="text" id="chat-input" placeholder="Nhập tin nhắn..." autocomplete="off"/>
+    <button class="chat-send-btn" id="chat-send-btn" title="Gửi">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- CHATBOT AI - JAVASCRIPT LOGIC -->
+<!-- ============================================================ -->
+<script>
+(function() {
+  'use strict';
+
+  // ============================================================
+  // CẤU HÌNH
+  // ============================================================
+  const CONFIG = {
+    API_URL: 'https://openrouter.ai/api/v1/chat/completions',
+    API_KEY: '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',
+    MODEL: 'z-ai/glm-4.5-air:free',
+    CHATBOT_DATA_URL: 'chatbot_data.txt',
+    // Google Sheets (thay URL sau khi deploy Apps Script)
+    GOOGLE_SCRIPT_URL: '',
+    WELCOME_MESSAGE: `Xin chào! 👋 Tôi là **Luminescent AI**, trợ lý ảo của chuyên gia **Nguyễn Văn A**.\n\nTôi có thể giúp bạn tìm hiểu về:\n- 🚀 **Dịch vụ AI & Tự động hóa**\n- 📚 **Khóa học K89 - Agentic AI**\n- 💼 **Giải pháp TMĐT**\n\nBạn muốn hỏi gì nào? 😊`
+  };
+
+  // ============================================================
+  // BIẾN TOÀN CỤC
+  // ============================================================
+  let chatbotKnowledge = '';
+  let conversationHistory = [];
+  let isProcessing = false;
+  const AI_CHAT_SESSION_ID = 'session_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+
+  // ============================================================
+  // DOM ELEMENTS
+  // ============================================================
+  const toggleBtn = document.getElementById('chatbot-toggle');
+  const chatWindow = document.getElementById('chatbot-window');
+  const chatMessages = document.getElementById('chat-messages');
+  const chatInput = document.getElementById('chat-input');
+  const sendBtn = document.getElementById('chat-send-btn');
+  const refreshBtn = document.getElementById('chat-refresh-btn');
+  const closeBtn = document.getElementById('chat-close-btn');
+  const chatBadge = document.getElementById('chatbot-badge');
+  const iconChat = document.getElementById('chatbot-icon-chat');
+  const iconClose = document.getElementById('chatbot-icon-close');
+
+  // ============================================================
+  // KHỞI TẠO
+  // ============================================================
+  loadChatbotData();
+  addWelcomeMessage();
+
+  // ============================================================
+  // SỰ KIỆN
+  // ============================================================
+  toggleBtn.addEventListener('click', toggleChat);
+  closeBtn.addEventListener('click', closeChat);
+  sendBtn.addEventListener('click', handleSend);
+  refreshBtn.addEventListener('click', handleRefresh);
+  chatInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  });
+
+  // ============================================================
+  // TOGGLE CHAT WINDOW
+  // ============================================================
+  function toggleChat() {
+    const isOpen = chatWindow.classList.contains('open');
+    if (isOpen) {
+      closeChat();
+    } else {
+      openChat();
+    }
+  }
+
+  function openChat() {
+    chatWindow.classList.add('open');
+    toggleBtn.classList.add('active');
+    iconChat.style.display = 'none';
+    iconClose.style.display = 'block';
+    chatBadge.style.display = 'none';
+    setTimeout(() => chatInput.focus(), 350);
+    scrollToBottom();
+  }
+
+  function closeChat() {
+    chatWindow.classList.remove('open');
+    toggleBtn.classList.remove('active');
+    iconChat.style.display = 'block';
+    iconClose.style.display = 'none';
+  }
+
+  // ============================================================
+  // LOAD KNOWLEDGE BASE
+  // ============================================================
+  async function loadChatbotData() {
+    try {
+      const response = await fetch(CONFIG.CHATBOT_DATA_URL);
+      if (response.ok) {
+        chatbotKnowledge = await response.text();
+        console.log('✅ Chatbot knowledge loaded');
+      }
+    } catch (err) {
+      console.warn('⚠️ Không load được chatbot_data.txt, dùng dữ liệu mặc định.');
+      chatbotKnowledge = 'Chuyên gia Nguyễn Văn A - AI & Tự động hóa. Khóa học K89 Agentic AI. Liên hệ: a@example.com | Zalo 0123456789';
+    }
+  }
+
+  // ============================================================
+  // TIN NHẮN CHÀO
+  // ============================================================
+  function addWelcomeMessage() {
+    addBotMessage(CONFIG.WELCOME_MESSAGE);
+  }
+
+  // ============================================================
+  // GỬI TIN NHẮN
+  // ============================================================
+  async function handleSend() {
+    const text = chatInput.value.trim();
+    if (!text || isProcessing) return;
+
+    // Hiển thị tin nhắn user
+    addUserMessage(text);
+    chatInput.value = '';
+    isProcessing = true;
+    sendBtn.disabled = true;
+
+    // Thêm vào lịch sử
+    conversationHistory.push({ role: 'user', content: text });
+
+    // Hiển thị typing indicator
+    showTyping();
+
+    try {
+      // Gọi API AI
+      const reply = await callAI(text);
+
+      // Xử lý lead tracking
+      const cleanReply = processAIResponse(reply, conversationHistory);
+
+      // Thêm vào lịch sử
+      conversationHistory.push({ role: 'assistant', content: reply });
+
+      // Hiển thị
+      removeTyping();
+      addBotMessage(cleanReply);
+    } catch (error) {
+      console.error('❌ Lỗi API:', error);
+      removeTyping();
+      addBotMessage('Xin lỗi, tôi đang gặp sự cố kết nối. Vui lòng thử lại sau hoặc liên hệ trực tiếp qua Zalo **0123456789** nhé! 🙏');
+    }
+
+    isProcessing = false;
+    sendBtn.disabled = false;
+    chatInput.focus();
+  }
+
+  // ============================================================
+  // GỌI API OPENROUTER
+  // ============================================================
+  async function callAI(userMessage) {
+    const systemPrompt = buildSystemPrompt();
+
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      ...conversationHistory.slice(-10) // Giữ 10 tin gần nhất để tiết kiệm token
+    ];
+
+    const response = await fetch(CONFIG.API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${CONFIG.API_KEY}`,
+        'HTTP-Referer': window.location.href,
+        'X-Title': 'Luminescent Consultant'
+      },
+      body: JSON.stringify({
+        model: CONFIG.MODEL,
+        messages: messages,
+        max_tokens: 1024,
+        temperature: 0.7
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.choices[0].message.content;
+  }
+
+  // ============================================================
+  // SYSTEM PROMPT
+  // ============================================================
+  function buildSystemPrompt() {
+    return `Bạn là "Luminescent AI" — Trợ lý AI độc quyền của chuyên gia Nguyễn Văn A, chuyên gia hàng đầu về AI & Tự động hóa Doanh nghiệp.
+
+## KNOWLEDGE BASE (Dữ liệu bắt buộc):
+${chatbotKnowledge}
+
+## QUY TẮC TRẢ LỜI:
+1. LUÔN trả lời bằng tiếng Việt, giọng thân thiện, chuyên nghiệp.
+2. CHỈ trả lời dựa trên Knowledge Base ở trên. Nếu câu hỏi ngoài phạm vi → từ chối nhẹ nhàng và hướng dẫn liên hệ qua Email: a@example.com hoặc Zalo: 0123456789.
+3. Trả lời bằng Markdown đẹp: dùng **in đậm**, *in nghiêng*, danh sách bullet, emoji phù hợp.
+4. Mỗi câu trả lời: Chào thân thiện → Trả lời rõ ràng → Kết thúc bằng lời mời hỏi thêm.
+5. Nếu khách hỏi về giá/học phí → khuyên liên hệ trực tiếp để nhận ưu đãi.
+
+## QUY TẮC ĐẶC BIỆT (LEAD TRACKING):
+Trong quá trình trò chuyện, nếu bạn phát hiện người dùng cung cấp Tên, Số điện thoại hoặc Email, bạn HÃY VỪA trả lời họ bình thường, VỪA chèn thêm một đoạn mã JSON vào cuối cùng của câu trả lời theo đúng định dạng sau:
+||LEAD_DATA: {"name": "...", "phone": "...", "email": "..."}||
+Nếu thông tin nào chưa có, hãy để null.
+TUYỆT ĐỐI KHÔNG giải thích hay đề cập đến đoạn mã này cho người dùng.`;
+  }
+
+  // ============================================================
+  // HIỂN THỊ TIN NHẮN
+  // ============================================================
+  function addBotMessage(text) {
+    const div = document.createElement('div');
+    div.className = 'chat-msg bot';
+    div.innerHTML = `
+      <div class="msg-avatar">🤖</div>
+      <div class="msg-bubble chat-markdown">${marked.parse(text)}</div>
+    `;
+    chatMessages.appendChild(div);
+    scrollToBottom();
+  }
+
+  function addUserMessage(text) {
+    const div = document.createElement('div');
+    div.className = 'chat-msg user';
+    div.innerHTML = `
+      <div class="msg-avatar">👤</div>
+      <div class="msg-bubble">${escapeHtml(text)}</div>
+    `;
+    chatMessages.appendChild(div);
+    scrollToBottom();
+  }
+
+  // ============================================================
+  // TYPING INDICATOR
+  // ============================================================
+  function showTyping() {
+    const div = document.createElement('div');
+    div.className = 'typing-indicator';
+    div.id = 'typing-indicator';
+    div.innerHTML = `
+      <div class="msg-avatar" style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#00f1fe,#7ea3ff);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;">🤖</div>
+      <div class="typing-dots">
+        <span></span><span></span><span></span>
+      </div>
+    `;
+    chatMessages.appendChild(div);
+    scrollToBottom();
+  }
+
+  function removeTyping() {
+    const typing = document.getElementById('typing-indicator');
+    if (typing) typing.remove();
+  }
+
+  // ============================================================
+  // REFRESH LOGIC
+  // ============================================================
+  function handleRefresh() {
+    const refreshIcon = refreshBtn.querySelector('svg');
+    refreshIcon.classList.add('spin-animation');
+
+    // Clear chat
+    chatMessages.innerHTML = '';
+    conversationHistory = [];
+
+    // Re-add welcome message
+    addWelcomeMessage();
+
+    // Stop spin after 500ms
+    setTimeout(() => {
+      refreshIcon.classList.remove('spin-animation');
+    }, 500);
+  }
+
+  // ============================================================
+  // LEAD TRACKING - BÓC TÁCH DỮ LIỆU
+  // ============================================================
+  function processAIResponse(aiResponse, historyArray) {
+    const dataPattern = /\|\|LEAD_DATA:\s*(\{.*?\})\s*\|\|/;
+
+    // Xây dựng lịch sử chat dạng text
+    let formattedHistory = '';
+    if (historyArray && historyArray.length > 0) {
+      formattedHistory = historyArray.map(msg => {
+        const role = msg.role === 'user' ? 'Khách' : 'AI';
+        const content = msg.content.replace(dataPattern, '').trim();
+        return `${role}: ${content}`;
+      }).join('\n\n');
+    }
+
+    if (aiResponse.includes('||LEAD_DATA:')) {
+      const match = aiResponse.match(dataPattern);
+      if (match && match[1]) {
+        try {
+          const leadData = JSON.parse(match[1]);
+          console.log('✅ Dữ liệu khách hàng:', leadData);
+
+          if (leadData.name || leadData.phone || leadData.email) {
+            sendLeadToGoogleSheets(leadData, formattedHistory);
+          }
+        } catch (error) {
+          console.error('❌ Lỗi parse JSON từ AI:', error);
+        }
+      }
+      aiResponse = aiResponse.replace(dataPattern, '').trim();
+    }
+    return aiResponse;
+  }
+
+  // ============================================================
+  // GỬI DỮ LIỆU LÊN GOOGLE SHEETS
+  // ============================================================
+  async function sendLeadToGoogleSheets(leadData, chatHistoryText) {
+    if (!CONFIG.GOOGLE_SCRIPT_URL) {
+      console.log('📋 Lead data (chưa cấu hình Google Sheets):', leadData);
+      return;
+    }
+    try {
+      await fetch(CONFIG.GOOGLE_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: leadData.name || '',
+          phone: leadData.phone || '',
+          email: leadData.email || '',
+          source: window.location.href,
+          sessionId: AI_CHAT_SESSION_ID,
+          chatHistory: chatHistoryText,
+          timestamp: new Date().toLocaleString('vi-VN')
+        })
+      });
+      console.log('📤 Đã đồng bộ dữ liệu vào Google Sheets!');
+    } catch (err) {
+      console.warn('⚠️ Không gửi được dữ liệu lead:', err);
+    }
+  }
+
+  // ============================================================
+  // TIỆN ÍCH
+  // ============================================================
+  function scrollToBottom() {
+    setTimeout(() => {
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }, 50);
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+})();
+</script>
+
 </body></html>
